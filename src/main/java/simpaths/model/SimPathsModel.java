@@ -169,8 +169,8 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     private boolean alignPopulation = true; //TODO: routine fails to replicate results for minor variations between simulations
 
     //	@GUIparameter(description = "If checked, will align fertility")
-    private boolean alignFertility = false;
-    private static final int FERTILITY_ALIGNMENT_END_YEAR = 2040;
+    private boolean alignFertility = true;
+    private static final int FERTILITY_ALIGNMENT_END_YEAR = 2070;
     private Double lastFertilityAdjustment = null;
 
     private boolean alignEducation = false; //Set to true to align level of education

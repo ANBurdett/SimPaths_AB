@@ -7,9 +7,9 @@
 maxNumberOfRuns: 1        # number of sequential simulation runs
 executeWithGui: false     # true = launch JAS-mine GUI; false = headless (required on servers/CI)
 randomSeed: 606           # seed for the first run; incremented automatically if randomSeedInnov is true
-startYear: 2019           # first year of simulation (must have matching input/donor data)
-endYear: 2022             # last year of simulation (inclusive)
-popSize: 50000            # simulated population size (larger = more accurate, slower)
+startYear: 2020           # first year of simulation (must have matching input/donor data)
+endYear: 2070             # last year of simulation (inclusive)
+popSize: 100000          # simulated population size (larger = more accurate, slower)
 # countryString: "United Kingdom"   # Auto-detected from donor DB if omitted
 # integrationTest: false            # true = write output to a fixed folder for comparison in CI tests
 
@@ -56,7 +56,7 @@ model_args:
   # --- Alignment flags ---
   # See model-concepts.md for a full explanation of what alignment does.
 #    alignPopulation: true        # align age-sex-region totals to official population projections
-#    alignFertility: true         # scale birth probabilities to match projected fertility rates
+#    alignFertility: true         # scale birth probabilities to match projected fertility rates; to target absolute TFR values by year, create input/scenario_fertility_tfr.xlsx (sheet = country code, columns: Year | Value)
 #    alignEducation: false        # align completed education distribution to targets
 #    alignInSchool: false         # align school participation rate (age 16–29) to targets
 #    alignCohabitation: false     # align share of cohabiting individuals to targets

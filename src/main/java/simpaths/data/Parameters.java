@@ -1763,6 +1763,16 @@ public class Parameters {
 
         fertilityRateByRegionYear = MultiKeyMap.multiKeyMap(new LinkedMap<>());
         fertilityRateByYear = new HashMap<>();
+
+        // Load optional TFR scenario overrides from scenario_fertility_tfr.xlsx (sheet = country code,
+        // columns: Year | Value). If present, TFR values override rates derived from population projections.
+        MultiKeyCoefficientMap tfrScenario = null;
+        File tfrFile = new File(getInputDirectory() + "scenario_fertility_tfr.xlsx");
+        if (tfrFile.exists()) {
+            tfrScenario = ExcelAssistant.loadCoefficientMap(
+                    getInputDirectory() + "scenario_fertility_tfr.xlsx", "UK", 1);
+        }
+
         for (int year = startYear; year <= endYear; year++) {
 
             double projectedNumFertileWomenAll = 0.0, numNewBornAll = 0.0;
@@ -1788,6 +1798,16 @@ public class Parameters {
                 }
             }
             fertilityRateByYear.put(year, numNewBornAll / projectedNumFertileWomenAll);
+
+            // Override with TFR scenario target if provided for this year.
+            // Converts TFR to births/fertile-women assuming uniform age-specific fertility across ages 18–49.
+            if (tfrScenario != null) {
+                Number tfrVal = (Number) tfrScenario.getValue("Value", year);
+                if (tfrVal != null) {
+                    double internalRate = tfrVal.doubleValue() / (MAX_AGE_MATERNITY - MIN_AGE_MATERNITY + 1);
+                    fertilityRateByYear.put(year, internalRate);
+                }
+            }
         }
     }
 
