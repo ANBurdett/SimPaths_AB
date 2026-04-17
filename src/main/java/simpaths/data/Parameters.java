@@ -1766,11 +1766,30 @@ public class Parameters {
 
         // Load optional TFR scenario overrides from scenario_fertility_tfr.xlsx (sheet = country code,
         // columns: Year | Value). If present, TFR values override rates derived from population projections.
-        MultiKeyCoefficientMap tfrScenario = null;
+        // Load optional TFR scenario directly with Apache POI for reliable year-keyed lookup
+        Map<Integer, Double> tfrByYear = new HashMap<>();
         File tfrFile = new File(getInputDirectory() + "scenario_fertility_tfr.xlsx");
         if (tfrFile.exists()) {
-            tfrScenario = ExcelAssistant.loadCoefficientMap(
-                    getInputDirectory() + "scenario_fertility_tfr.xlsx", "UK", 1);
+            System.out.println("Loading TFR scenario from: " + tfrFile.getAbsolutePath());
+            try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb = new org.apache.poi.xssf.usermodel.XSSFWorkbook(tfrFile)) {
+                org.apache.poi.xssf.usermodel.XSSFSheet sheet = wb.getSheet("UK");
+                if (sheet == null) throw new RuntimeException("Sheet 'UK' not found in scenario_fertility_tfr.xlsx");
+                for (int r = 1; r <= sheet.getLastRowNum(); r++) { // skip header row 0
+                    org.apache.poi.xssf.usermodel.XSSFRow row = sheet.getRow(r);
+                    if (row == null) continue;
+                    org.apache.poi.xssf.usermodel.XSSFCell yearCell = row.getCell(0);
+                    org.apache.poi.xssf.usermodel.XSSFCell valCell  = row.getCell(1);
+                    if (yearCell == null || valCell == null) continue;
+                    int yr = (int) yearCell.getNumericCellValue();
+                    double tfr = valCell.getNumericCellValue();
+                    tfrByYear.put(yr, tfr);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to load scenario_fertility_tfr.xlsx: " + e.getMessage(), e);
+            }
+            System.out.println("TFR scenario loaded: " + tfrByYear.size() + " years, e.g. 2030 = " + tfrByYear.get(2030));
+        } else {
+            System.out.println("No TFR scenario file found at: " + tfrFile.getAbsolutePath() + " — using population projections.");
         }
 
         for (int year = startYear; year <= endYear; year++) {
@@ -1801,12 +1820,9 @@ public class Parameters {
 
             // Override with TFR scenario target if provided for this year.
             // Converts TFR to births/fertile-women assuming uniform age-specific fertility across ages 18–49.
-            if (tfrScenario != null) {
-                Number tfrVal = (Number) tfrScenario.getValue("Value", year);
-                if (tfrVal != null) {
-                    double internalRate = tfrVal.doubleValue() / (MAX_AGE_MATERNITY - MIN_AGE_MATERNITY + 1);
-                    fertilityRateByYear.put(year, internalRate);
-                }
+            if (tfrByYear.containsKey(year)) {
+                double internalRate = tfrByYear.get(year) / (MAX_AGE_MATERNITY - MIN_AGE_MATERNITY + 1);
+                fertilityRateByYear.put(year, internalRate);
             }
         }
     }
